@@ -1,0 +1,9 @@
+time:
+  start: "2019-01-01"
+  end: "2020-01-01"
+  resolution: "1H"
+
+zones:
+  - DE
+  - FR
+  - IT

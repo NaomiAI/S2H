@@ -1,9 +1,25 @@
-time:
-  start: "2019-01-01"
-  end: "2020-01-01"
-  resolution: "1H"
+inputs:
+  planning_network_nc: "data/elec_s_39.nc"
 
-zones:
-  - DE
-  - FR
-  - IT
+# If omitted, the code will use all buses in the .nc as zones.
+# If you want explicit zones, list them here:
+# zones: ["DE", "FR", "IT", "..."]
+
+pumping_retrofit:
+  capital_cost_eur_per_mw_year: 120000   # example placeholder
+  marginal_cost: 0.0
+  p_nom_min_mw: 0.0
+  p_nom_max_mw: 1000000
+  max_hours: 6
+  efficiency_store: 0.9
+  efficiency_dispatch: 0.9
+  cyclic_soc: false
+
+solver:
+  name: "highs"
+  options: {}
+
+outputs:
+  planning_dir: "results/planning"
+  # optional:
+  # planning_solved_nc: "results/planning/planning_39_solved.nc"

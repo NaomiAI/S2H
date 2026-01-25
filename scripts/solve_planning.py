@@ -2,7 +2,7 @@ from pathlib import Path
 
 from store2hydro.config.loader import load_config
 from store2hydro.io.netcdf import load_network, save_network
-from store2hydro.planning.solve import run_step1_planning
+from store2hydro.planning.solve import run_step1_planning, apply_time_subset
 
 
 def main():
@@ -12,6 +12,10 @@ def main():
     out_dir = Path(cfg.get("outputs", {}).get("planning_dir", "results/planning"))
 
     n = load_network(planning_nc)
+
+    # Optional testing hook: reduce snapshots via config
+    n = apply_time_subset(n, cfg)
+    print(f"Running planning model with {len(n.snapshots)} snapshots")
 
     outputs = run_step1_planning(n, cfg, out_dir=out_dir)
 

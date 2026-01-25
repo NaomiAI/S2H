@@ -17,6 +17,38 @@ def _ensure_dir(path: str | Path) -> Path:
     return p
 
 
+def apply_time_subset(n: pypsa.Network, cfg: dict) -> pypsa.Network:
+    """
+    Optionally reduce the number of snapshots for testing/debugging.
+
+    Uses index-based slicing:
+      snapshots[start : start + max_snapshots]
+
+    Config:
+      time:
+        max_snapshots: 200   # or null/omit for full horizon
+        snapshot_start: 0
+    """
+    time_cfg = cfg.get("time", {}) or {}
+    max_snaps = time_cfg.get("max_snapshots", None)
+    start = int(time_cfg.get("snapshot_start", 0))
+
+    if max_snaps is None:
+        return n  # use full time horizon
+
+    max_snaps = int(max_snaps)
+    if max_snaps <= 0:
+        raise ValueError("time.max_snapshots must be a positive integer or null/omitted.")
+
+    snapshots = n.snapshots[start : start + max_snaps]
+    if len(snapshots) == 0:
+        raise ValueError("Selected snapshot window is empty. Check snapshot_start/max_snapshots.")
+
+    n2 = n.copy()
+    n2.set_snapshots(snapshots)
+    return n2
+
+
 def select_zone_buses(n: pypsa.Network, cfg: dict) -> list[str]:
     """
     Decide which buses count as 'zones' for zonal pumping retrofits.
@@ -37,7 +69,6 @@ def select_zone_buses(n: pypsa.Network, cfg: dict) -> list[str]:
 def add_pumping_retrofit_storageunits(n: pypsa.Network, cfg: dict) -> list[str]:
     """
     Add one extendable StorageUnit per zone bus to represent retrofit pumping capacity.
-    This is intentionally 'zonal' and technology-agnostic.
 
     Investment variable: p_nom (MW)
     Energy capacity: max_hours * p_nom (MWh)
@@ -75,25 +106,26 @@ def apply_overlays(n: pypsa.Network, cfg: dict) -> None:
     Hook for optional system-wide constraints or parameter overrides.
     Keep it minimal now; extend later as needed.
     """
-    # Example: enforce a global CO2 cap if the network has carriers/emissions
-    # (only applies if you already model emissions in your network)
+    # Example: global constraint hook (only if your network supports it)
     co2_cap = cfg.get("constraints", {}).get("co2_cap", None)
     if co2_cap is not None:
-        n.add("GlobalConstraint", "CO2Limit", type="primary_energy", carrier_attribute="co2_emissions", sense="<=", constant=float(co2_cap))
+        n.add(
+            "GlobalConstraint",
+            "CO2Limit",
+            type="primary_energy",
+            carrier_attribute="co2_emissions",
+            sense="<=",
+            constant=float(co2_cap),
+        )
 
 
 def solve_planning(n: pypsa.Network, cfg: dict) -> None:
     solver_name = cfg.get("solver", {}).get("name", "highs")
     solver_opts = cfg.get("solver", {}).get("options", {}) or {}
-
-    # PyPSA optimization call
     n.optimize(solver_name=solver_name, solver_options=solver_opts)
 
 
 def extract_zonal_investments(n: pypsa.Network, retrofit_names: list[str]) -> pd.DataFrame:
-    """
-    Returns a tidy table: zone, p_nom_opt_mw, e_nom_opt_mwh (derived from max_hours).
-    """
     rows = []
     for name in retrofit_names:
         su = n.storage_units.loc[name]

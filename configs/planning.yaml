@@ -5,6 +5,27 @@ inputs:
 # If you want explicit zones, list them here:
 # zones: ["DE", "FR", "IT", "..."]
 
+inputs:
+  planning_network_nc: "data/networks/planning_39.nc"
+
+time:
+  # Optional testing controls
+  max_snapshots: 200        # null or omit = use all snapshots
+  snapshot_start: 0         # index-based slicing (optional)
+
+pumping_retrofit:
+  capital_cost_eur_per_mw_year: 120000
+  marginal_cost: 0.0
+  p_nom_min_mw: 0.0
+  p_nom_max_mw: 1000000
+  max_hours: 6
+  efficiency_store: 0.9
+  efficiency_dispatch: 0.9
+  cyclic_soc: false
+
+solver:
+  name: "highs"
+
 pumping_retrofit:
   capital_cost_eur_per_mw_year: 120000   # example placeholder
   marginal_cost: 0.0
@@ -16,7 +37,7 @@ pumping_retrofit:
   cyclic_soc: false
 
 solver:
-  name: "highs"
+  name: "gurobi"
   options: {}
 
 outputs:

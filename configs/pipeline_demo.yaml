@@ -1,0 +1,37 @@
+investment:
+  network_nc: "data/networks/elec_s_39.nc"
+  time:
+    max_snapshots: 168
+  solver:
+    name: "highs"
+    options: {}
+  pumping_retrofit:
+    capital_cost_eur_per_mw_year: 120000
+    marginal_cost: 0.0
+    p_nom_min_mw: 0.0
+    p_nom_max_mw: 2000
+    max_hours: 6
+    efficiency_store: 0.9
+    efficiency_dispatch: 0.9
+    cyclic_soc: false
+
+dispatch:
+  network_nc: "data/networks/elec_s_39.nc"     # today: use same file as m-network
+  rolling:
+    freq: "MS"                        # monthly windows (or "7D" for faster)
+    carry_store_pattern: "res_"
+  solver:
+    name: "highs"
+    options: {}
+
+mapping:
+  group_key: "bus"  # today demo: groups==buses (generalizes later to zones/countries)
+
+transfer:
+  hybrid:
+    - tech: "pump_retrofit"
+      component: "Link"
+      variable: "p_nom"
+      carrier: "pump_retrofit_candidate"
+      bounds_column: "p_nom_max"
+      group_sum: "=="

@@ -21,3 +21,9 @@ results/**
 
 # OS
 .DS_Store
+
+# Packaging
+*.egg-info/
+dist/
+build/
+.eggs/
